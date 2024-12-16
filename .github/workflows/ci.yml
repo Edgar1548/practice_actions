@@ -1,0 +1,33 @@
+name: Merge Workflow
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  setup_environment:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure environment
+        run: |
+          if [[ "${{ github.event.pull_request.head.ref }}" == "flutter" ]]; then
+            cp config/test/config.dart lib/config.dart
+          else
+            cp config/production/config.dart lib/config.dart
+          fi
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add lib/config.dart
+          git commit -m "Updated configuration"
+          git push
