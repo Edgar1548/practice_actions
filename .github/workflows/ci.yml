@@ -29,7 +29,7 @@ jobs:
 
       - name: Update Config File
         run: |
-          if [[ "$ENV" == "test" ]]; then
+          if [[ "$ENV" == test ]]; then
             echo "🚀 Detected TEST environment. Updating config.dart for TEST."
             cp config/test/config.dart lib/config.dart
           else
