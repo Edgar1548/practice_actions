@@ -68,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _counter++;
       _counter++;
       _counter++;
+      _counter++;
     });
   }
 
