@@ -1,0 +1,44 @@
+name: Configure Environment on Merge
+
+on:
+  pull_request:
+    types: [closed]  # Trigger when a PR is closed
+
+jobs:
+  setup_environment:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Determine Environment
+        id: determine_env
+        run: |
+          # Default environment
+          ENV="production"
+
+          # Check for flags in the pull request title or body
+          if [[ "${{ github.event.pull_request.title }}" == *"[TEST]"* || "${{ github.event.pull_request.body }}" == *"[TEST]"* ]]; then
+            ENV="test"
+          fi
+
+          echo "Selected environment: $ENV"
+          echo "env=$ENV" >> $GITHUB_ENV
+
+      - name: Update Config File
+        run: |
+          if [[ "$ENV" == "test" ]]; then
+            cp config/test/config.dart lib/config.dart
+          else
+            cp config/production/config.dart lib/config.dart
+          fi
+
+      - name: Commit and Push Changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add lib/config.dart
+          git commit -m "Updated config.dart for $ENV environment"
+          git push
