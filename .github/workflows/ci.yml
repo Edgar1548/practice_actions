@@ -1,0 +1,54 @@
+name: Merge Workflow
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  setup_environment:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js (for Flutter dependencies)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.13.0'
+
+      - name: Prompt for environment
+        run: echo "::set-output name=env_choice::$(read -p 'Enter environment (test/production): ' choice && echo $choice)"
+        id: get_env_choice
+
+      - name: Configure environment
+        run: |
+          if [[ "${{ steps.get_env_choice.outputs.env_choice }}" == "test" ]]; then
+            cp config/test/config.dart lib/config.dart
+            cp config/test/home.dart lib/pages/home.dart
+            cp config/test/settings.dart lib/pages/settings.dart
+          elif [[ "${{ steps.get_env_choice.outputs.env_choice }}" == "production" ]]; then
+            cp config/production/config.dart lib/config.dart
+            cp config/production/home.dart lib/pages/home.dart
+            cp config/production/settings.dart lib/pages/settings.dart
+          else
+            echo "Invalid choice. Exiting."
+            exit 1
+          fi
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add lib/config.dart lib/pages/home.dart lib/pages/settings.dart
+          git commit -m "Configured environment: ${{ steps.get_env_choice.outputs.env_choice }}"
+          git push
