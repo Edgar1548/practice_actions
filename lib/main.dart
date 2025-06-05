@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
     print("message - here ")
     print("other here")
     print("maybe not")
+    print("asdsa")
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
